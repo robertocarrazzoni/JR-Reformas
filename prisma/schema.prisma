@@ -1,0 +1,80 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CANCELLED
+  DONE
+}
+
+model User {
+  id                String        @id @default(cuid())
+  name              String
+  email             String        @unique
+  passwordHash      String
+  phone             String?
+  role              Role          @default(CUSTOMER)
+  // Gravado a cada troca/redefinição de senha. JWTs emitidos antes deste
+  // instante são considerados revogados (ver src/lib/token.ts).
+  passwordChangedAt DateTime?
+  appointments      Appointment[]
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
+
+model AvailabilitySlot {
+  id           String        @id @default(cuid())
+  startsAt     DateTime      @unique
+  endsAt       DateTime
+  isBlocked    Boolean       @default(false)
+  appointments Appointment[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+/// O índice único parcial `Appointment_active_slot_key`
+/// ("slotId" WHERE "status" = 'SCHEDULED') existe apenas no SQL da migration
+/// 20261022120000_allow_rebooking_cancelled_slots. Ele é a barreira contra
+/// double booking e não é expressável no schema: se rodar `prisma db pull`,
+/// recrie-o manualmente.
+model Appointment {
+  id          String            @id @default(cuid())
+  customerId  String
+  slotId      String
+  status      AppointmentStatus @default(SCHEDULED)
+  description String
+  address     String
+  notes       String?
+  cancelledAt DateTime?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  customer User             @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  slot     AvailabilitySlot @relation(fields: [slotId], references: [id], onDelete: Restrict)
+
+  @@index([customerId])
+  @@index([slotId])
+  @@index([status])
+}
+
+/// Contador de rate limit por janela fixa. A PK composta faz o
+/// `INSERT ... ON CONFLICT DO UPDATE` do upsert ser atômico em Postgres.
+model RateLimitCounter {
+  key         String
+  windowStart DateTime
+  count       Int      @default(1)
+
+  @@id([key, windowStart])
+}
