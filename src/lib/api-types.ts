@@ -52,10 +52,6 @@ export interface AuthResponse {
   user: SessionUserDTO;
 }
 
-export interface MeResponse {
-  user: SessionUserDTO;
-}
-
 export interface MessageResponse {
   message: string;
 }

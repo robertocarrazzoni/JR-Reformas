@@ -8,19 +8,17 @@ import {
   futureDate,
   pastDate,
 } from "./helpers/factories";
-import { signTestToken } from "./helpers/auth";
 import { jsonRequest, plainRequest } from "./helpers/request";
 
 jest.mock("next/headers", () => ({
   cookies: async () => mockCookieStore,
 }));
 
-import { GET as getSlots, POST as createSlotRoute } from "@/app/api/slots/route";
+import { POST as createSlotRoute } from "@/app/api/slots/route";
 import {
   DELETE as deleteSlotRoute,
   PATCH as updateSlotRoute,
 } from "@/app/api/slots/[id]/route";
-import { GET as getAdminSlots } from "@/app/api/admin/slots/route";
 import { prisma } from "@/lib/prisma";
 
 interface SlotBody {
@@ -37,24 +35,6 @@ describe("Slots routes", () => {
   });
 
   afterAll(disconnectDatabase);
-
-  describe("GET /api/slots", () => {
-    it("returns only available slots as ISO dates", async () => {
-      const available = await createSlot();
-      const blocked = await createSlot({ startsAt: futureDate(72), isBlocked: true });
-
-      const response = await getSlots();
-
-      expect(response.status).toBe(200);
-
-      const body = (await response.json()) as SlotBody[];
-      const ids = body.map((slot) => slot.id);
-
-      expect(ids).toEqual([available.id]);
-      expect(ids).not.toContain(blocked.id);
-      expect(body[0].startsAt).toBe(available.startsAt.toISOString());
-    });
-  });
 
   describe("POST /api/slots", () => {
     it("creates a slot", async () => {
@@ -220,58 +200,4 @@ describe("Slots routes", () => {
     });
   });
 
-  describe("GET /api/admin/slots", () => {
-    it("returns serialized slots with their appointments", async () => {
-      const admin = await createUser({ role: "ADMIN" });
-      const user = await createUser({ name: "Cliente Admin" });
-      const slot = await createSlot();
-      await createAppointment({ customerId: user.id, slotId: slot.id });
-
-      mockCookieStore.seed(
-        "token",
-        await signTestToken({ sub: admin.id, email: admin.email, role: "ADMIN" }),
-      );
-
-      const response = await getAdminSlots();
-
-      expect(response.status).toBe(200);
-
-      const body = (await response.json()) as Array<{
-        id: string;
-        startsAt: string;
-        appointments: Array<{
-          id: string;
-          customer: { name: string };
-          slot: { id: string };
-        }>;
-      }>;
-
-      expect(body).toHaveLength(1);
-      expect(body[0].id).toBe(slot.id);
-      expect(body[0].startsAt).toBe(slot.startsAt.toISOString());
-      expect(body[0].appointments).toHaveLength(1);
-      expect(body[0].appointments[0].customer.name).toBe("Cliente Admin");
-      expect(body[0].appointments[0].slot.id).toBe(slot.id);
-    });
-
-    it("returns 401 without a token", async () => {
-      const response = await getAdminSlots();
-
-      expect(response.status).toBe(401);
-    });
-
-    it("returns 403 for a customer", async () => {
-      const customer = await createUser();
-      mockCookieStore.seed(
-        "token",
-        await signTestToken({ sub: customer.id, email: customer.email, role: "CUSTOMER" }),
-      );
-
-      const response = await getAdminSlots();
-
-      expect(response.status).toBe(403);
-      const body = (await response.json()) as { message: string };
-      expect(body.message).toBe("Acesso proibido");
-    });
-  });
 });

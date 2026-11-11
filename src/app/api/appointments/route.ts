@@ -6,7 +6,6 @@ import { createAppointmentSchema } from "@/lib/schemas/appointmentsSchema";
 import {
   AppointmentError,
   createAppointmentService,
-  getAppointmentsService,
 } from "@/services/appointmentService";
 
 function errorResponse(error: unknown) {
@@ -19,18 +18,6 @@ function errorResponse(error: unknown) {
   }
 
   return NextResponse.json({ message: "Erro interno no servidor" }, { status: 500 });
-}
-
-export async function GET() {
-  try {
-    const token = (await cookies()).get(AUTH_COOKIE)?.value;
-    const actor = await getAuthenticatedUser(token);
-    const appointments = await getAppointmentsService(actor);
-
-    return NextResponse.json(appointments, { status: 200 });
-  } catch (error) {
-    return errorResponse(error);
-  }
 }
 
 export async function POST(request: Request) {

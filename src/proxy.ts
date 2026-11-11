@@ -48,10 +48,6 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (pathname.startsWith("/api/")) {
-    if (pathname === "/api/slots" && request.method === "GET") {
-      return NextResponse.next();
-    }
-
     const payload = await readTokenPayload(request);
 
     if (!payload) {
@@ -107,7 +103,6 @@ export const config = {
   matcher: [
     "/api/slots",
     "/api/slots/:path*",
-    "/api/admin/:path*",
     "/login",
     "/cadastro",
     "/conta/:path*",
