@@ -11,6 +11,7 @@
     "test": "jest",
     "lint": "eslint",
     "db:migrate": "prisma migrate dev",
+    "db:seed": "prisma db seed",
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",
     "db:test:create": "node scripts/ensure-test-db.mjs",
@@ -41,11 +42,13 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "cross-env": "^10.1.0",
+    "dotenv": "^18.0.10",
     "eslint": "^9",
     "eslint-config-next": "16.3.2",
     "jest": "^30.5.0",
     "prisma": "^7.9.1",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   },
   "allowScripts": {

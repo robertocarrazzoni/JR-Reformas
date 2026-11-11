@@ -73,6 +73,37 @@ describe("Users password routes", () => {
       );
     });
 
+    it("updates the password of an ADMIN account", async () => {
+      const admin = await createUser({
+        email: "admin-senha@example.com",
+        password: "password123",
+        role: "ADMIN",
+      });
+
+      mockCookieStore.seed(
+        "token",
+        await signTestToken({ sub: admin.id, email: admin.email, role: "ADMIN" }),
+      );
+
+      const response = await updatePassword(
+        jsonRequest("/api/users/password", {
+          currentPassword: "password123",
+          newPassword: "novaSenha456",
+        }),
+      );
+
+      expect(response.status).toBe(200);
+      const body = (await response.json()) as MessageResponse;
+      expect(body.message).toBe("Senha atualizada com sucesso");
+
+      const stored = await prisma.user.findUnique({ where: { id: admin.id } });
+
+      await expect(
+        compare("novaSenha456", stored?.passwordHash as string),
+      ).resolves.toBe(true);
+      expect(stored?.role).toBe("ADMIN");
+    });
+
     it("rejects a wrong current password with 400", async () => {
       const user = await createUser({ password: "password123" });
       mockCookieStore.seed("token", await signTestToken({ sub: user.id, email: user.email }));

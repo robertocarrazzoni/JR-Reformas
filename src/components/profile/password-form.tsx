@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { KeyRound } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,17 @@ type FieldErrors = Partial<
   Record<"currentPassword" | "newPassword" | "confirmPassword" | "form", string>
 >;
 
-export function PasswordForm() {
+interface PasswordFormProps {
+  /**
+   * Para onde ir depois da troca. A sessão atual é revogada no servidor, então
+   * isso só deve ser usado onde encerrar o cookie é o comportamento esperado
+   * (ex.: /admin/conta).
+   */
+  redirectTo?: string;
+}
+
+export function PasswordForm({ redirectTo }: PasswordFormProps) {
+  const router = useRouter();
   const { toast } = useToast();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -61,6 +72,16 @@ export function PasswordForm() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
+
+      if (redirectTo) {
+        // A senha mudou, então o token atual já está revogado. Sem limpar o
+        // cookie, o proxy ainda enxerga um token válido e devolveria o usuário
+        // para a área logada em loop.
+        await apiFetch("/api/users/logout", { method: "POST" }).catch(
+          () => undefined,
+        );
+        router.replace(redirectTo);
+      }
     } catch (error) {
       setErrors({ form: getErrorMessage(error) });
     } finally {

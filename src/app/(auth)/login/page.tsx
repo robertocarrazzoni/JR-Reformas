@@ -11,6 +11,7 @@ interface LoginPageProps {
     next?: string | string[];
     cadastrado?: string | string[];
     redefinido?: string | string[];
+    alterada?: string | string[];
   }>;
 }
 
@@ -22,7 +23,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     ? "Conta criada com sucesso. Faça login para continuar."
     : params.redefinido
       ? "Senha redefinida com sucesso. Entre com a nova senha."
-      : undefined;
+      : params.alterada
+        ? "Senha alterada com sucesso. Entre com a nova senha."
+        : undefined;
 
   return <LoginForm nextPath={nextPath} notice={notice} />;
 }

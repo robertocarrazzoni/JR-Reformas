@@ -33,7 +33,7 @@ Use `npm` as the package manager.
 - `npm test` runs the Jest test suite.
 - `npm run lint` checks code style and common issues.
 - `npx prisma migrate dev` applies local database migrations.
-- `npx prisma db seed` creates initial admin and slot data.
+- `npx prisma db seed` creates the initial admin from `ADMIN_EMAIL`/`ADMIN_PASSWORD`. It never overwrites an existing password; slots are created in the admin panel.
 
 ## Coding Style & Naming Conventions
 

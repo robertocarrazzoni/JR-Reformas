@@ -46,6 +46,7 @@ const adminNav: NavItem[] = [
     label: "Agendamentos",
     icon: ClipboardList,
   },
+  { href: "/admin/conta", label: "Conta", icon: UserRound },
 ];
 
 export interface ShellUser {

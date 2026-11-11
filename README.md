@@ -41,17 +41,24 @@ para desenvolvimento.
 
 ```bash
 npm install                 # roda `prisma generate` no postinstall
-cp .env.example .env        # preencha JWT_SECRET e NEXT_PUBLIC_APP_URL
+cp .env.example .env        # preencha JWT_SECRET, NEXT_PUBLIC_APP_URL e ADMIN_*
 npm run db:migrate          # aplica as migrations
-npx prisma db seed          # cria admin e horários iniciais
+npm run db:seed             # cria o usuário admin (idempotente)
 npm run dev
 ```
+
+O seed lê `ADMIN_EMAIL` e `ADMIN_PASSWORD` e **só grava a senha na criação** do
+usuário. Rodá-lo de novo mantém a senha atual e apenas garante `role = ADMIN`.
+Os horários de atendimento são criados pelo painel em `/admin/agenda`.
 
 ### Variáveis de ambiente
 
 | Variável | Obrigatória | Uso |
 |---|---|---|
 | `DATABASE_URL` | sim | conexão do Postgres (em produção, use a URL *pooled*) |
+| `DIRECT_URL` | em produção | conexão direta usada apenas por `migrate`/`seed` |
+| `ADMIN_EMAIL` | no seed | e-mail do admin criado por `npm run db:seed` |
+| `ADMIN_PASSWORD` | no seed | senha inicial do admin (mínimo 6 caracteres) |
 | `JWT_SECRET` | sim | assinatura dos JWTs de sessão e de reset |
 | `NEXT_PUBLIC_APP_URL` | sim | base dos links de e-mail e metadata |
 | `RESEND_API_KEY` | em produção | envio do e-mail de recuperação |
@@ -70,6 +77,7 @@ conta existe), mas **não envia** o e-mail e registra um `console.error`.
 | `npm run lint` | ESLint (inclui a regra de acesso ao Prisma) |
 | `npm test` | Jest (sobe o Docker e prepara o banco de teste) |
 | `npm run db:migrate` | `prisma migrate dev` no banco de desenvolvimento |
+| `npm run db:seed` | cria o admin inicial (`ADMIN_EMAIL`/`ADMIN_PASSWORD`), idempotente |
 | `npm run db:generate` | regenera o Prisma Client |
 | `npm run db:studio` | Prisma Studio |
 
@@ -118,8 +126,16 @@ proxy de rotas.
 2. Configure `JWT_SECRET`, `NEXT_PUBLIC_APP_URL`, `RESEND_API_KEY` e
    `EMAIL_FROM`. Não configure `EXPOSE_RESET_TOKEN`.
 3. O build roda `prisma generate` via `postinstall`. Aplique as migrations com
-   `npx prisma migrate deploy` (localmente contra o banco de produção ou em um
-   step do CI).
+   `npx prisma migrate deploy` usando a URL **direta** (`DIRECT_URL`) e crie o
+   admin com `npm run db:seed` — os dois comandos são manuais e **não** rodam no
+   build:
+
+   ```bash
+   DATABASE_URL="$DIRECT_URL" npx prisma migrate deploy
+   DATABASE_URL="$DIRECT_URL" npm run db:seed
+   ```
+
+   Depois do primeiro login em `/admin`, troque a senha em `/admin/conta`.
 
 Limitações conhecidas:
 
@@ -129,6 +145,8 @@ Limitações conhecidas:
   contas e caixas de e-mail, não a cota de invocações da plataforma.
 - `Appointment_active_slot_key` é um índice único parcial criado só na migration
   (ver comentário no `schema.prisma`); recrie-o à mão após um `prisma db pull`.
+- Os horários não são gerados automaticamente: o admin precisa criar novos slots
+  em `/admin/agenda` para manter o site com disponibilidade.
 
 ## Identidade visual
 
