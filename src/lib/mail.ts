@@ -1,10 +1,11 @@
 import { Resend } from "resend";
+import { getAppUrl } from "@/lib/appUrl";
 
 const resendApiKey = process.env.RESEND_API_KEY;
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
 export async function sendPasswordResetEmail(email: string, resetToken: string) {
-  const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/redefinir-senha?token=${resetToken}`;
+  const resetUrl = `${getAppUrl()}/redefinir-senha?token=${resetToken}`;
 
   if (!resend) {
     // Falha explícita: sem a chave o e-mail NÃO é enviado. A rota continua

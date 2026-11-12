@@ -41,7 +41,7 @@ para desenvolvimento.
 
 ```bash
 npm install                 # roda `prisma generate` no postinstall
-cp .env.example .env        # preencha JWT_SECRET, NEXT_PUBLIC_APP_URL e ADMIN_*
+cp .env.example .env        # preencha JWT_SECRET, APP_URL e ADMIN_*
 npm run db:migrate          # aplica as migrations
 npm run db:seed             # cria o usuário admin (idempotente)
 npm run dev
@@ -60,7 +60,7 @@ Os horários de atendimento são criados pelo painel em `/admin/agenda`.
 | `ADMIN_EMAIL` | no seed | e-mail do admin criado por `npm run db:seed` |
 | `ADMIN_PASSWORD` | no seed | senha inicial do admin (mínimo 6 caracteres) |
 | `JWT_SECRET` | sim | assinatura dos JWTs de sessão e de reset |
-| `NEXT_PUBLIC_APP_URL` | sim | base dos links de e-mail e metadata |
+| `APP_URL` | sim | base dos links de e-mail e metadata (somente servidor) |
 | `RESEND_API_KEY` | em produção | envio do e-mail de recuperação |
 | `EMAIL_FROM` | não | remetente verificado no Resend |
 | `EXPOSE_RESET_TOKEN` | **nunca em produção** | devolve o token de reset na resposta (só para testes locais) |
@@ -123,7 +123,7 @@ proxy de rotas.
 
 1. Crie o Postgres pelo Marketplace (Neon/Supabase) e use a **connection string
    pooled** em `DATABASE_URL`.
-2. Configure `JWT_SECRET`, `NEXT_PUBLIC_APP_URL`, `RESEND_API_KEY` e
+2. Configure `JWT_SECRET`, `APP_URL`, `RESEND_API_KEY` e
    `EMAIL_FROM`. Não configure `EXPOSE_RESET_TOKEN`.
 3. O build roda `prisma generate` via `postinstall`. Aplique as migrations com
    `npx prisma migrate deploy` usando a URL **direta** (`DIRECT_URL`) e crie o

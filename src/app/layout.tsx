@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Archivo, Inter } from "next/font/google";
 import { ToastProvider } from "@/components/ui/toast";
+import { getAppUrl } from "@/lib/appUrl";
 import { siteConfig } from "@/lib/config";
 import "./globals.css";
 
@@ -18,9 +19,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
-  ),
+  metadataBase: new URL(getAppUrl()),
   title: {
     default: `${siteConfig.fullName} | ${siteConfig.tagline}`,
     template: `%s | ${siteConfig.name}`,
