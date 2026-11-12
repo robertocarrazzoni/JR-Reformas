@@ -25,7 +25,10 @@ function requireEnv(name: string) {
 }
 
 async function main() {
-  const connectionString = requireEnv("DATABASE_URL");
+  // Tarefa administrativa: usa a conexão direta (sem PgBouncer) quando existir,
+  // como nas migrations. O app em si continua usando DATABASE_URL (pooled).
+  const connectionString =
+    process.env.DATABASE_URL_UNPOOLED?.trim() || requireEnv("DATABASE_URL");
   const email = requireEnv("ADMIN_EMAIL");
   const password = requireEnv("ADMIN_PASSWORD");
 

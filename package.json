@@ -15,10 +15,12 @@
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",
     "db:test:create": "node scripts/ensure-test-db.mjs",
-    "db:test:migrate": "cross-env DATABASE_URL=postgresql://postgres:postgrespassword@localhost:5432/jr_reformas_test?schema=public prisma migrate deploy",
+    "db:test:migrate": "cross-env DATABASE_URL=postgresql://postgres:postgrespassword@localhost:5432/jr_reformas_test?schema=public DATABASE_URL_UNPOOLED=postgresql://postgres:postgrespassword@localhost:5432/jr_reformas_test?schema=public prisma migrate deploy",
     "db:test:setup": "prisma generate && npm run db:test:create && npm run db:test:migrate"
   },
   "dependencies": {
+    "@neon/config": "^1.14.0",
+    "@neon/env": "^2.1.3",
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.9.1",
     "@types/bcryptjs": "^2.4.6",
