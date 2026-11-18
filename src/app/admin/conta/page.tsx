@@ -2,9 +2,8 @@ import type { Metadata } from "next";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { PasswordForm } from "@/components/profile/password-form";
-import { ProfileForm } from "@/components/profile/profile-form";
+import { ProfileLoader } from "@/components/profile/profile-loader";
 import { requireAdmin } from "@/lib/session";
-import { serializeSessionUser } from "@/lib/serializers";
 
 export const metadata: Metadata = {
   title: "Minha conta",
@@ -13,7 +12,6 @@ export const metadata: Metadata = {
 
 export default async function AdminAccountPage() {
   const user = await requireAdmin();
-  const serialized = serializeSessionUser(user);
 
   return (
     <div className="space-y-8">
@@ -34,13 +32,7 @@ export default async function AdminAccountPage() {
       </header>
 
       <div className="space-y-6">
-        <ProfileForm
-          user={{
-            name: serialized.name,
-            email: serialized.email,
-            phone: serialized.phone,
-          }}
-        />
+        <ProfileLoader />
         <PasswordForm redirectTo="/login?alterada=1" />
       </div>
 

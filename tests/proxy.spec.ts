@@ -157,11 +157,28 @@ describe("Proxy", () => {
       expect(await response.json()).toEqual({ message: "Não autorizado" });
     });
 
+    it("libera GET /api/slots para um cliente autenticado", async () => {
+      const token = await signTestToken(customerPayload);
+
+      expectPass(await proxy(plainRequest("/api/slots", { method: "GET", token })));
+    });
+
     it("exige token para POST /api/slots", async () => {
       const response = await proxy(plainRequest("/api/slots", { method: "POST" }));
 
       expect(response.status).toBe(401);
       expect(await response.json()).toEqual({ message: "Não autorizado" });
+    });
+
+    it("bloqueia cliente em POST /api/slots", async () => {
+      const token = await signTestToken(customerPayload);
+
+      const response = await proxy(
+        plainRequest("/api/slots", { method: "POST", token }),
+      );
+
+      expect(response.status).toBe(403);
+      expect(await response.json()).toEqual({ message: "Acesso proibido" });
     });
 
     it("exige admin para /api/slots/:id", async () => {
@@ -185,12 +202,50 @@ describe("Proxy", () => {
       expectPass(await proxy(plainRequest("/api/slots/slot-1", { token })));
     });
 
-    it("bloqueia cliente em POST /api/slots", async () => {
+    it("libera GET /api/appointments para um cliente autenticado", async () => {
       const token = await signTestToken(customerPayload);
 
-      const response = await proxy(plainRequest("/api/slots", { method: "POST", token }));
+      expectPass(await proxy(plainRequest("/api/appointments", { token })));
+    });
+
+    it("exige token para GET /api/appointments", async () => {
+      const response = await proxy(plainRequest("/api/appointments"));
+
+      expect(response.status).toBe(401);
+    });
+
+    it("libera GET /api/users/me para um cliente autenticado", async () => {
+      const token = await signTestToken(customerPayload);
+
+      expectPass(await proxy(plainRequest("/api/users/me", { token })));
+    });
+
+    it("exige token para /api/users/me", async () => {
+      const response = await proxy(plainRequest("/api/users/me"));
+
+      expect(response.status).toBe(401);
+    });
+
+    it("exige token para /api/admin/slots", async () => {
+      const response = await proxy(plainRequest("/api/admin/slots"));
+
+      expect(response.status).toBe(401);
+      expect(await response.json()).toEqual({ message: "Não autorizado" });
+    });
+
+    it("bloqueia cliente em /api/admin/slots com 403", async () => {
+      const token = await signTestToken(customerPayload);
+
+      const response = await proxy(plainRequest("/api/admin/slots", { token }));
 
       expect(response.status).toBe(403);
+      expect(await response.json()).toEqual({ message: "Acesso proibido" });
+    });
+
+    it("libera admin em /api/admin/slots", async () => {
+      const token = await signTestToken(adminPayload);
+
+      expectPass(await proxy(plainRequest("/api/admin/slots", { token })));
     });
   });
 });

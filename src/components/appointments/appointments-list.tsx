@@ -31,9 +31,11 @@ function byStartDesc(a: AppointmentDTO, b: AppointmentDTO) {
 export function AppointmentsList({
   appointments,
   role,
+  onCancelled,
 }: {
   appointments: AppointmentDTO[];
   role: string;
+  onCancelled?: () => void;
 }) {
   const [filter, setFilter] = useState<Filter>("upcoming");
 
@@ -122,6 +124,7 @@ export function AppointmentsList({
               key={appointment.id}
               appointment={appointment}
               role={role}
+              onCancelled={onCancelled}
             />
           ))
         )}

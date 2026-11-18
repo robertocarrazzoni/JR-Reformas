@@ -36,6 +36,23 @@ function matchesPrefix(pathname: string, prefixes: string[]) {
   );
 }
 
+/**
+ * Rotas de API que só o administrador pode chamar. As rotas de leitura de
+ * cliente (slots disponíveis, agendamentos e perfil) ficam liberadas para
+ * qualquer sessão válida.
+ */
+function isAdminOnlyApi(pathname: string, method: string) {
+  if (pathname === "/api/admin" || pathname.startsWith("/api/admin/")) {
+    return true;
+  }
+
+  if (pathname === "/api/slots") {
+    return method !== "GET";
+  }
+
+  return pathname.startsWith("/api/slots/");
+}
+
 function buildLoginRedirect(request: NextRequest, nextPath: string) {
   const url = request.nextUrl.clone();
   url.pathname = "/login";
@@ -54,7 +71,7 @@ export async function proxy(request: NextRequest) {
       return NextResponse.json({ message: "Não autorizado" }, { status: 401 });
     }
 
-    if (payload.role !== "ADMIN") {
+    if (isAdminOnlyApi(pathname, request.method) && payload.role !== "ADMIN") {
       return NextResponse.json({ message: "Acesso proibido" }, { status: 403 });
     }
 
@@ -103,6 +120,10 @@ export const config = {
   matcher: [
     "/api/slots",
     "/api/slots/:path*",
+    "/api/appointments",
+    "/api/appointments/:path*",
+    "/api/admin/:path*",
+    "/api/users/me",
     "/login",
     "/cadastro",
     "/conta/:path*",

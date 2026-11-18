@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, type SubmitEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Save } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
@@ -16,11 +16,12 @@ import { updateSchema } from "@/lib/schemas/authSchema";
 
 interface ProfileFormProps {
   user: Pick<SessionUserDTO, "name" | "email" | "phone">;
+  onSaved?: () => void;
 }
 
 type FieldErrors = Partial<Record<"name" | "email" | "phone" | "form", string>>;
 
-export function ProfileForm({ user }: ProfileFormProps) {
+export function ProfileForm({ user, onSaved }: ProfileFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [name, setName] = useState(user.name);
@@ -29,8 +30,8 @@ export function ProfileForm({ user }: ProfileFormProps) {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function handleSubmit(e: SubmitEvent<HTMLFormElement>) {
+    e.preventDefault();
     setErrors({});
 
     const parsed = updateSchema.safeParse({
@@ -62,6 +63,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
         description: "Suas informações de contato foram salvas.",
         variant: "success",
       });
+      onSaved?.();
       router.refresh();
     } catch (error) {
       setErrors({ form: getErrorMessage(error) });

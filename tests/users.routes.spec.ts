@@ -18,6 +18,7 @@ import {
 } from "@/app/api/users/route";
 import { POST as login } from "@/app/api/users/login/route";
 import { POST as logout } from "@/app/api/users/logout/route";
+import { GET as getMe } from "@/app/api/users/me/route";
 import { prisma } from "@/lib/prisma";
 
 interface UserBody {
@@ -271,6 +272,69 @@ describe("Users routes", () => {
         httpOnly: true,
         maxAge: 0,
       });
+    });
+  });
+
+  describe("GET /api/users/me", () => {
+    it("returns the authenticated profile with an ISO createdAt", async () => {
+      const user = await createUser({ email: "perfil@example.com" });
+      mockCookieStore.seed(
+        "token",
+        await signTestToken({
+          sub: user.id,
+          email: user.email,
+          role: "CUSTOMER",
+        }),
+      );
+
+      const response = await getMe();
+
+      expect(response.status).toBe(200);
+      const body = (await response.json()) as { user: UserBody };
+
+      expect(body.user).toMatchObject({
+        id: user.id,
+        name: user.name,
+        email: "perfil@example.com",
+        role: "CUSTOMER",
+      });
+      expect(body.user).not.toHaveProperty("passwordHash");
+      expect(typeof body.user.createdAt).toBe("string");
+      expect(Number.isNaN(Date.parse(body.user.createdAt))).toBe(false);
+    });
+
+    it("returns 401 without a token", async () => {
+      const response = await getMe();
+
+      expect(response.status).toBe(401);
+    });
+
+    it("returns 401 for an invalid token", async () => {
+      mockCookieStore.seed("token", "token-invalido");
+
+      const response = await getMe();
+
+      expect(response.status).toBe(401);
+    });
+
+    it("returns 401 when the user was removed", async () => {
+      const user = await createUser();
+      mockCookieStore.seed(
+        "token",
+        await signTestToken({
+          sub: user.id,
+          email: user.email,
+          role: "CUSTOMER",
+        }),
+      );
+
+      await prisma.user.delete({ where: { id: user.id } });
+
+      const response = await getMe();
+
+      expect(response.status).toBe(401);
+      const body = (await response.json()) as MessageResponse;
+      expect(body.message).toBe("Usuário não encontrado");
     });
   });
 

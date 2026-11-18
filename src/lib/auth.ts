@@ -1,4 +1,4 @@
-import { AuthenticationError } from "@/lib/errors";
+import { AppError, AuthenticationError } from "@/lib/errors";
 import {
   SESSION_REVOKED_MESSAGE,
   isSessionRevoked,
@@ -33,4 +33,20 @@ export async function getAuthenticatedUser(
   }
 
   return { userId: state.id, role: state.role };
+}
+
+/**
+ * Mesma verificação de sessão, mas exige papel ADMIN. Fica no route handler
+ * para que a autorização não dependa apenas do matcher do proxy.
+ */
+export async function getAuthenticatedAdmin(
+  token: string | undefined,
+): Promise<AuthenticatedUser> {
+  const actor = await getAuthenticatedUser(token);
+
+  if (actor.role !== "ADMIN") {
+    throw new AppError("Acesso proibido", 403);
+  }
+
+  return actor;
 }

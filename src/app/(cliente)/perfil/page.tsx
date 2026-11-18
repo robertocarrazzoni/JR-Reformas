@@ -3,9 +3,8 @@ import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { DeleteAccount } from "@/components/profile/delete-account";
 import { PasswordForm } from "@/components/profile/password-form";
-import { ProfileForm } from "@/components/profile/profile-form";
+import { ProfileLoader } from "@/components/profile/profile-loader";
 import { requireUser } from "@/lib/session";
-import { serializeSessionUser } from "@/lib/serializers";
 
 export const metadata: Metadata = {
   title: "Meu perfil",
@@ -14,7 +13,6 @@ export const metadata: Metadata = {
 
 export default async function ProfilePage() {
   const user = await requireUser();
-  const serialized = serializeSessionUser(user);
 
   return (
     <div className="space-y-8">
@@ -35,13 +33,7 @@ export default async function ProfilePage() {
       </header>
 
       <div className="space-y-6">
-        <ProfileForm
-          user={{
-            name: serialized.name,
-            email: serialized.email,
-            phone: serialized.phone,
-          }}
-        />
+        <ProfileLoader />
         <PasswordForm />
         <DeleteAccount />
       </div>

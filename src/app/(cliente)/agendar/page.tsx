@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { BookingFlow } from "@/components/booking/booking-flow";
-import { getAvailableSlotsService } from "@/services/slotsService";
 import { requireUser } from "@/lib/session";
-import { serializeSlot } from "@/lib/serializers";
 
 export const metadata: Metadata = {
   title: "Agendar visita",
@@ -12,8 +10,6 @@ export const metadata: Metadata = {
 
 export default async function BookingPage() {
   await requireUser();
-
-  const slots = (await getAvailableSlotsService()).map(serializeSlot);
 
   return (
     <div className="space-y-6">
@@ -30,7 +26,7 @@ export default async function BookingPage() {
         </p>
       </header>
 
-      <BookingFlow slots={slots} />
+      <BookingFlow />
     </div>
   );
 }

@@ -14,7 +14,10 @@ jest.mock("next/headers", () => ({
   cookies: async () => mockCookieStore,
 }));
 
-import { POST as createAppointmentRoute } from "@/app/api/appointments/route";
+import {
+  GET as getAppointments,
+  POST as createAppointmentRoute,
+} from "@/app/api/appointments/route";
 import { DELETE as cancelAppointmentRoute } from "@/app/api/appointments/[id]/route";
 import { prisma } from "@/lib/prisma";
 
@@ -46,6 +49,64 @@ describe("Appointments routes", () => {
   });
 
   afterAll(disconnectDatabase);
+
+  describe("GET /api/appointments", () => {
+    it("returns only the customer appointments", async () => {
+      const customer = await createUser();
+      const other = await createUser();
+
+      const ownSlot = await createSlot();
+      const otherSlot = await createSlot({ startsAt: futureDate(96) });
+
+      await createAppointment({ customerId: customer.id, slotId: ownSlot.id });
+      await createAppointment({ customerId: other.id, slotId: otherSlot.id });
+
+      mockCookieStore.seed("token", await customerToken(customer.id));
+
+      const response = await getAppointments();
+
+      expect(response.status).toBe(200);
+
+      const body = (await response.json()) as AppointmentBody[];
+
+      expect(body).toHaveLength(1);
+      expect(body[0].customerId).toBe(customer.id);
+      expect(body[0].slot.startsAt).toBe(ownSlot.startsAt.toISOString());
+    });
+
+    it("returns every appointment for an admin", async () => {
+      const admin = await createUser({ role: "ADMIN" });
+      const customer = await createUser();
+      const other = await createUser();
+
+      await createAppointment({
+        customerId: customer.id,
+        slotId: (await createSlot()).id,
+      });
+      await createAppointment({
+        customerId: other.id,
+        slotId: (await createSlot({ startsAt: futureDate(96) })).id,
+      });
+
+      mockCookieStore.seed("token", await adminToken(admin.id));
+
+      const response = await getAppointments();
+
+      expect(response.status).toBe(200);
+
+      const body = (await response.json()) as AppointmentBody[];
+
+      expect(body).toHaveLength(2);
+    });
+
+    it("returns 401 without a token", async () => {
+      const response = await getAppointments();
+
+      expect(response.status).toBe(401);
+      const body = (await response.json()) as { message: string };
+      expect(body.message).toBe("Não autorizado");
+    });
+  });
 
   describe("POST /api/appointments", () => {
     it("creates an appointment for an available slot", async () => {

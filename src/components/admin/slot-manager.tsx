@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   CalendarDays,
   CalendarX2,
@@ -22,8 +21,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Modal } from "@/components/ui/modal";
+import { QueryError } from "@/components/ui/query-error";
+import { Skeleton, SkeletonCard } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
 import { apiFetch, getErrorMessage } from "@/lib/api";
+import { useApiQuery } from "@/lib/use-api-query";
 import type { AdminSlotDTO, AppointmentDTO } from "@/lib/api-types";
 import { formatDateLong, formatPhone, formatTime, formatWeekday, nowMs, toDateKey } from "@/lib/format";
 
@@ -59,12 +61,37 @@ function scheduledAppointment(slot: AdminSlotDTO): AppointmentDTO | null {
   );
 }
 
-export function SlotManager({ slots }: { slots: AdminSlotDTO[] }) {
-  const router = useRouter();
+export function SlotManager() {
   const { toast } = useToast();
+  const { data, error, loading, reload } = useApiQuery<AdminSlotDTO[]>(
+    "/api/admin/slots",
+  );
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AdminSlotDTO | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  if (loading && !data) {
+    return (
+      <div
+        className="grid gap-6 lg:grid-cols-[1fr_22rem]"
+        aria-busy="true"
+      >
+        <SkeletonCard />
+        <div className="space-y-4 rounded-2xl border border-ink-900/10 bg-white p-6">
+          <Skeleton className="h-5 w-32" />
+          <Skeleton className="h-11 w-full rounded-xl" />
+          <Skeleton className="h-11 w-full rounded-xl" />
+          <Skeleton className="h-11 w-full rounded-xl" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return <QueryError message={error} onRetry={() => void reload()} />;
+  }
+
+  const slots = data ?? [];
 
   const now = nowMs();
   const upcoming = slots.filter(
@@ -92,7 +119,7 @@ export function SlotManager({ slots }: { slots: AdminSlotDTO[] }) {
           : "O horário não aceitará novos agendamentos.",
         variant: "success",
       });
-      router.refresh();
+      void reload();
     } catch (error) {
       toast({
         title: "Não foi possível atualizar",
@@ -119,7 +146,7 @@ export function SlotManager({ slots }: { slots: AdminSlotDTO[] }) {
         variant: "success",
       });
       setDeleteTarget(null);
-      router.refresh();
+      void reload();
     } catch (error) {
       toast({
         title: "Não foi possível excluir",
@@ -301,7 +328,7 @@ export function SlotManager({ slots }: { slots: AdminSlotDTO[] }) {
       </div>
 
       <div className="space-y-6 lg:sticky lg:top-6 lg:self-start">
-        <SlotForm />
+        <SlotForm onCreated={() => void reload()} />
       </div>
 
       <Modal

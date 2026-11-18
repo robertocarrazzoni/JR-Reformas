@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, type SubmitEvent } from "react";
 import { useRouter } from "next/navigation";
 import { KeyRound } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
@@ -34,8 +34,8 @@ export function PasswordForm({ redirectTo }: PasswordFormProps) {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function handleSubmit(e: SubmitEvent<HTMLFormElement>) {
+    e.preventDefault();
     setErrors({});
 
     const nextErrors: FieldErrors = {};

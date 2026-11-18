@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useState, type SubmitEvent } from "react";
 import { CalendarPlus } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -18,8 +17,7 @@ import { useToast } from "@/components/ui/toast";
 import { apiFetch, getErrorMessage } from "@/lib/api";
 import { toDateInputValue, toISOStringFromInputs } from "@/lib/format";
 
-export function SlotForm() {
-  const router = useRouter();
+export function SlotForm({ onCreated }: { onCreated?: () => void }) {
   const { toast } = useToast();
   const [date, setDate] = useState(toDateInputValue(new Date()));
   const [startTime, setStartTime] = useState("08:00");
@@ -27,8 +25,8 @@ export function SlotForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function handleSubmit(e: SubmitEvent<HTMLFormElement>) {
+    e.preventDefault();
     setError(null);
 
     if (!date || !startTime || !endTime) {
@@ -62,7 +60,7 @@ export function SlotForm() {
         variant: "success",
       });
       setError(null);
-      router.refresh();
+      onCreated?.();
     } catch (requestError) {
       setError(getErrorMessage(requestError));
     } finally {

@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
-import { AppointmentsList } from "@/components/appointments/appointments-list";
+import { AppointmentsFeed } from "@/components/appointments/appointments-feed";
 import { LinkButton } from "@/components/ui/link-button";
-import { getAppointmentsService } from "@/services/appointmentService";
 import { requireUser } from "@/lib/session";
-import { serializeAppointment } from "@/lib/serializers";
 
 export const metadata: Metadata = {
   title: "Meus agendamentos",
@@ -12,9 +10,6 @@ export const metadata: Metadata = {
 
 export default async function AppointmentsPage() {
   const user = await requireUser();
-  const appointments = (
-    await getAppointmentsService({ userId: user.id, role: user.role })
-  ).map(serializeAppointment);
 
   return (
     <div className="space-y-8">
@@ -34,7 +29,7 @@ export default async function AppointmentsPage() {
         <LinkButton href="/agendar">Agendar visita</LinkButton>
       </header>
 
-      <AppointmentsList appointments={appointments} role={user.role} />
+      <AppointmentsFeed role={user.role} />
     </div>
   );
 }

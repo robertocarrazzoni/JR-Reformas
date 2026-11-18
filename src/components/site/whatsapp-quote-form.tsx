@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, type SubmitEvent } from "react";
 import { MessageCircle, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/field-error";
@@ -19,8 +19,8 @@ export function WhatsAppQuoteForm() {
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState<{ name?: string; message?: string }>({});
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function handleSubmit(e: SubmitEvent<HTMLFormElement>) {
+    e.preventDefault();
 
     const nextErrors: { name?: string; message?: string } = {};
 

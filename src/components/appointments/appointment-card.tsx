@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   CalendarX2,
   Clock,
@@ -34,10 +33,14 @@ import {
 interface AppointmentCardProps {
   appointment: AppointmentDTO;
   role: string;
+  onCancelled?: () => void;
 }
 
-export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
-  const router = useRouter();
+export function AppointmentCard({
+  appointment,
+  role,
+  onCancelled,
+}: AppointmentCardProps) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -63,7 +66,7 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
         variant: "success",
       });
       setOpen(false);
-      router.refresh();
+      onCancelled?.();
     } catch (error) {
       toast({
         title: "Não foi possível cancelar",

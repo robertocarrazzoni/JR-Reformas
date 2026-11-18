@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, type SubmitEvent } from "react";
 import Link from "next/link";
 import { ArrowLeft, MailCheck } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
@@ -16,8 +16,8 @@ export function ForgotPasswordForm() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ForgotPasswordResponse | null>(null);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function handleSubmit(e: SubmitEvent<HTMLFormElement>) {
+    e.preventDefault();
     setError(null);
     setResult(null);
     setLoading(true);

@@ -20,9 +20,11 @@ import { FieldError } from "@/components/ui/field-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LinkButton } from "@/components/ui/link-button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/toast";
 import { apiFetch, getErrorMessage } from "@/lib/api";
+import { useApiQuery } from "@/lib/use-api-query";
 import type { AppointmentDTO, SlotDTO } from "@/lib/api-types";
 import { createAppointmentSchema } from "@/lib/schemas/appointmentsSchema";
 import {
@@ -51,9 +53,11 @@ interface DateGroup {
   slots: SlotDTO[];
 }
 
-export function BookingFlow({ slots }: { slots: SlotDTO[] }) {
+export function BookingFlow() {
   const router = useRouter();
   const { toast } = useToast();
+  const { data, error, loading, reload } = useApiQuery<SlotDTO[]>("/api/slots");
+  const slots = useMemo(() => data ?? [], [data]);
 
   const groups = useMemo<DateGroup[]>(() => {
     const map = new Map<string, SlotDTO[]>();
@@ -82,18 +86,17 @@ export function BookingFlow({ slots }: { slots: SlotDTO[] }) {
   }, [slots]);
 
   const [step, setStep] = useState<Step>(1);
-  const [selectedDate, setSelectedDate] = useState<string | null>(
-    groups[0]?.key ?? null,
-  );
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
   const [description, setDescription] = useState("");
   const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [confirmation, setConfirmation] = useState<AppointmentDTO | null>(null);
 
-  const activeGroup = groups.find((group) => group.key === selectedDate) ?? null;
+  const activeDateKey = selectedDate ?? groups[0]?.key ?? null;
+  const activeGroup = groups.find((group) => group.key === activeDateKey) ?? null;
   const selectedSlot =
     slots.find((slot) => slot.id === selectedSlotId) ?? null;
 
@@ -138,7 +141,7 @@ export function BookingFlow({ slots }: { slots: SlotDTO[] }) {
 
   async function handleSubmit() {
     setErrors({});
-    setLoading(true);
+    setSubmitting(true);
 
     try {
       const appointment = await apiFetch<AppointmentDTO>("/api/appointments", {
@@ -157,11 +160,11 @@ export function BookingFlow({ slots }: { slots: SlotDTO[] }) {
         description: "Acompanhe os detalhes em Minha conta.",
         variant: "success",
       });
-      router.refresh();
+      void reload();
     } catch (error) {
       setErrors({ form: getErrorMessage(error) });
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   }
 
@@ -173,6 +176,50 @@ export function BookingFlow({ slots }: { slots: SlotDTO[] }) {
     setAddress("");
     setNotes("");
     setErrors({});
+    void reload();
+  }
+
+  if (loading && !data) {
+    return (
+      <div className="space-y-6" aria-busy="true">
+        <div className="flex gap-2">
+          <Skeleton className="h-8 flex-1 rounded-full" />
+          <Skeleton className="h-8 flex-1 rounded-full" />
+          <Skeleton className="h-8 flex-1 rounded-full" />
+        </div>
+        <div className="rounded-2xl border border-ink-900/10 bg-white p-5 shadow-sm sm:p-6">
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="mt-2 h-3.5 w-64" />
+          <div className="mt-4 flex gap-2">
+            {[0, 1, 2, 3].map((item) => (
+              <Skeleton key={item} className="h-20 w-20 rounded-xl" />
+            ))}
+          </div>
+          <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+            {[0, 1, 2, 3].map((item) => (
+              <Skeleton key={item} className="h-12 rounded-xl" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert variant="error" title="Não foi possível carregar os horários">
+        <p>{error}</p>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="mt-3"
+          onClick={() => void reload()}
+        >
+          Tentar novamente
+        </Button>
+      </Alert>
+    );
   }
 
   if (slots.length === 0) {
@@ -300,7 +347,7 @@ export function BookingFlow({ slots }: { slots: SlotDTO[] }) {
 
               <div className="no-scrollbar mt-4 flex gap-2 overflow-x-auto pb-1">
                 {groups.map((group) => {
-                  const active = selectedDate === group.key;
+                  const active = activeDateKey === group.key;
 
                   return (
                     <button
@@ -524,7 +571,7 @@ export function BookingFlow({ slots }: { slots: SlotDTO[] }) {
             }
             setStep((previous) => (previous - 1) as Step);
           }}
-          disabled={loading}
+          disabled={submitting}
         >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           {step === 1 ? "Voltar à conta" : "Voltar"}
@@ -536,9 +583,9 @@ export function BookingFlow({ slots }: { slots: SlotDTO[] }) {
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Button>
         ) : (
-          <Button type="button" onClick={handleSubmit} loading={loading}>
+          <Button type="button" onClick={handleSubmit} loading={submitting}>
             <CalendarCheck className="h-4 w-4" aria-hidden="true" />
-            {loading ? "Confirmando..." : "Confirmar agendamento"}
+            {submitting ? "Confirmando..." : "Confirmar agendamento"}
           </Button>
         )}
       </div>

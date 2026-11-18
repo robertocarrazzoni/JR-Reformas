@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { SlotManager } from "@/components/admin/slot-manager";
-import { serializeAdminSlot } from "@/lib/serializers";
 import { requireAdmin } from "@/lib/session";
-import { getAdminSlotsService } from "@/services/slotsService";
 
 export const metadata: Metadata = {
   title: "Agenda",
@@ -11,10 +9,6 @@ export const metadata: Metadata = {
 
 export default async function AdminSchedulePage() {
   await requireAdmin();
-
-  const slots = await getAdminSlotsService();
-
-  const serialized = slots.map(serializeAdminSlot);
 
   return (
     <div className="space-y-8">
@@ -31,7 +25,7 @@ export default async function AdminSchedulePage() {
         </p>
       </header>
 
-      <SlotManager slots={serialized} />
+      <SlotManager />
     </div>
   );
 }
